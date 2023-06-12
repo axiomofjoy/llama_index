@@ -124,18 +124,26 @@ class ResponseSynthesizer:
 
     def _get_extra_info_for_response(
         self,
+        query_bundle: QueryBundle,
         nodes: List[Node],
     ) -> Optional[Dict[str, Any]]:
         """Get extra info for response."""
-        return {node.get_doc_id(): node.extra_info for node in nodes}
+        return {
+            "query_embedding": query_bundle.embedding,
+            "node_info": {
+                node.get_doc_id(): node.extra_info for node in nodes
+            },
+        }
 
     def _prepare_response_output(
         self,
         response_str: Optional[RESPONSE_TEXT_TYPE],
+        query_bundle: QueryBundle,
         source_nodes: List[NodeWithScore],
     ) -> RESPONSE_TYPE:
         """Prepare response object from response string."""
         response_extra_info = self._get_extra_info_for_response(
+            query_bundle,
             [node_with_score.node for node_with_score in source_nodes]
         )
 
@@ -186,7 +194,7 @@ class ResponseSynthesizer:
         additional_source_nodes = additional_source_nodes or []
         source_nodes = list(nodes) + list(additional_source_nodes)
 
-        response = self._prepare_response_output(response_str, source_nodes)
+        response = self._prepare_response_output(response_str, query_bundle, source_nodes)
         self._callback_manager.on_event_end(
             CBEventType.SYNTHESIZE,
             payload={"response": response},
@@ -225,7 +233,7 @@ class ResponseSynthesizer:
         additional_source_nodes = additional_source_nodes or []
         source_nodes = list(nodes) + list(additional_source_nodes)
 
-        response = self._prepare_response_output(response_str, source_nodes)
+        response = self._prepare_response_output(response_str, query_bundle, source_nodes)
         self._callback_manager.on_event_end(
             CBEventType.SYNTHESIZE,
             payload={"response": response},
